@@ -16,12 +16,12 @@ class Type_Produit(models.Model):
 
 class Client(models.Model):
     code=models.IntegerField(primary_key=True)
-    nom=models.CharField(max_length=50)
+    nom_prenom=models.CharField(max_length=50)
     adresse=models.CharField(max_length=50)
     téléphone=models.IntegerField()
 
 class Fournisseur(models.Model):
     code=models.IntegerField(primary_key=True)
-    nom=models.CharField(max_length=50)
+    nom_prenom=models.CharField(max_length=50)
     adresse=models.CharField(max_length=50)
     téléphone=models.IntegerField()
