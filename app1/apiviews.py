@@ -1,8 +1,8 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from .models import Type_Produit,Fournisseur,Produit,Client
-from .serializers import ProduitSerializer,Type_ProduitSerializer,ClientSerializer,FournisseurSerializer
+from .models import Type_Produit,Facture,Acheter_Produit,Fournisseur,Produit,Client,Commande_Produits,Commande_un_Produit
+from .serializers import ProduitSerializer,Facture_Serializer,Achet_un_Produit_Serializer,Type_ProduitSerializer,Commande_un_Produit_Serializer,ClientSerializer,Commande_Produits_Serializer,FournisseurSerializer
 from django.http import FileResponse
 import pdfkit
 
@@ -61,10 +61,14 @@ class Imprimer_Produit(APIView):
     def get(self,request):
         
         self.generate_html_file()
+
+
         pdfkit.from_file('pdf.html', 'produits.pdf')
+
+
         pdf=open('produits.pdf','rb')
         
-        return FileResponse(pdf,as_attachment=True, content_type='application/pdf')
+        return FileResponse(pdf)
 
 
 
@@ -92,6 +96,7 @@ class ListType(APIView):
 
         
 class GetType(APIView):
+    serializer_class=Type_ProduitSerializer
     def get(self,request,pk):
         type=Type_Produit.objects.get(code=pk)
         serializer=Type_ProduitSerializer(type)
@@ -250,3 +255,183 @@ class Imprimer_Fournisseurs(APIView):
         pdfkit.from_file('pdf.html', 'Fournisseurs.pdf')
         pdf=open('Fournisseurs.pdf','rb')
         return FileResponse(pdf)
+
+
+
+
+
+
+class Commander_Produits(APIView):
+    serializer_class=Commande_Produits_Serializer
+    def get(self,request):
+        commandes=Commande_Produits.objects.all()
+        serializer=Commande_Produits_Serializer(commandes,many=True)
+        return Response(serializer.data)
+    def post(self,request):
+        data=request.data
+        serializer=Commande_Produits_Serializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+class Get_Commander_Produits(APIView):
+    serializer_class=Commande_Produits_Serializer
+    def get(self,request,pk):
+        Commande=Commande_Produits.objects.get(id=pk)
+        serializer=Commande_Produits_Serializer(Commande)
+        return Response(serializer.data)
+    
+    def delete(self, request, pk):
+        Commande = Commande_Produits.objects.get(id=pk)
+        Commande.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    def put(self,request,pk):
+        Commande=Commande_Produits.objects.get(id=pk)
+        serializer=Commande_Produits_Serializer(Commande,data=request.data)
+        if serializer.is_valid():   
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+# IMprimer lA commande
+
+class Imprimer_Bon_Commande(APIView):
+    def generate_html_file(self,pk):
+        commande=Commande_Produits.objects.get(id=pk)
+        strTable = "<html><head><link href='https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css' rel='stylesheet' integrity='sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65' crossorigin='anonymous'></head><body><div><h1>ID de Commande: "+str(commande.id)+"</h1> <br> <h3>"+"Created at: "+str(commande.created_at)+"</h3><br><h3>"+"Updated at: "+str(commande.updated_at)+"</h3></div><table class='table'><thead class='table-dark'><tr><th scope='col'>Designation</th><th scope='col'>Quntity</th></tr></thead><tbody>"
+        produits_commander=Commande_Produits.produit_commander.through.objects.filter(commande_produits_id=pk) 
+        produit_commander=produits_commander.values('commande_un_produit_id')
+
+        # print(produits.values('commande_un_produit_id').commande_un_produit_id)
+        for prd in produit_commander:
+            produit=Commande_un_Produit.objects.get(id=prd['commande_un_produit_id'])
+            strRW = "<tr><td>"+str(produit.produit)+ "</td><td>"+str(produit.qte)+"</td></tr>"
+            strTable = strTable+strRW
+        
+        strTable = strTable+"</tbody></table></body></html>"   
+        hs = open("pdf.html", 'w')
+        hs.write(strTable)
+
+    def get(self,request,pk):
+        self.generate_html_file(pk)
+        pdfkit.from_file('pdf.html', 'Bon_Commande.pdf')
+        pdf=open('Bon_Commande.pdf','rb')
+        return FileResponse(pdf)
+
+
+
+
+
+class Commander_un_Produit(APIView):
+    serializer_class=Commande_un_Produit_Serializer
+    def get(self,request):
+        quntitys=Commande_un_Produit.objects.all()
+        serializer=Commande_un_Produit_Serializer(quntitys,many=True)
+        return Response(serializer.data)
+    def post(self,request):
+        data=request.data
+        serializer=Commande_un_Produit_Serializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+class Get_Commander_un_Produit(APIView):
+    serializer_class=Commande_un_Produit_Serializer
+    def get(self,request,pk):
+        Commande=Commande_Produits.objects.get(id=pk)
+        serializer=Commande_Produits_Serializer(Commande)
+        return Response(serializer.data)
+    
+    def delete(self, request, pk):
+        Commande = Commande_Produits.objects.get(id=pk)
+        Commande.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    def put(self,request,pk):
+        Commande=Commande_Produits.objects.get(id=pk)
+        serializer=Commande_Produits_Serializer(Commande,data=request.data)
+        if serializer.is_valid():   
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        
+
+
+# section Achat Facture
+class Acheter_un_Produit(APIView):
+    serializer_class=Achet_un_Produit_Serializer
+    def get(self,request):
+        produit_achete=Acheter_Produit.objects.all()
+        serializer=Achet_un_Produit_Serializer(produit_achete,many=True)
+        return Response(serializer.data)
+    def post(self,request):
+        data=request.data
+        serializer=Achet_un_Produit_Serializer(data=data)
+        if serializer.is_valid():
+            serializer.validated_data['montant_HT']=serializer.validated_data['unité_HT']*serializer.validated_data['qte']
+            serializer.save()
+            # Acheter_Produit.montant_ht(self)
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+class Get_Acheter_un_Produit(APIView):
+    serializer_class=Achet_un_Produit_Serializer
+    def get(self,request,pk):
+        produit_achete=Acheter_Produit.objects.get(id=pk)
+        serializer=Achet_un_Produit_Serializer(produit_achete)
+        return Response(serializer.data)
+    
+    def delete(self, request, pk):
+        produit_achete = Acheter_Produit.objects.get(id=pk)
+        produit_achete.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    def put(self,request,pk):
+        produit_achete=Acheter_Produit.objects.get(id=pk)
+        serializer=Achet_un_Produit_Serializer(produit_achete,data=request.data)
+        if serializer.is_valid():   
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        
+
+# Facture
+class Factures(APIView):
+    serializer_class=Facture_Serializer
+    def get(self,request):
+        factures=Facture.objects.all()
+        serializer=Facture_Serializer(factures,many=True)
+        return Response(serializer.data)
+    def post(self,request):
+        data=request.data
+        serializer=Facture_Serializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+class Get_Facture(APIView):
+    serializer_class=Facture_Serializer
+    def get(self,request,pk):
+        facture=Facture.objects.get(id=pk)
+        serializer=Facture_Serializer(Facture)
+        return Response(serializer.data)
+    
+    def delete(self, request, pk):
+        facture = Facture.objects.get(id=pk)
+        facture.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    def put(self,request,pk):
+        facture=Facture.objects.get(id=pk)
+        serializer=Facture_Serializer(facture,data=request.data)
+        if serializer.is_valid():   
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
