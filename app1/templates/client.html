@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/client.css' %}">
+
+    <title>ADD Clinet</title>
+</head>
+<body>
+    
+<div class="container">
+    <form id="formElem">
+      <div class="row">
+        <h2>Client</h2>
+        <div class="input-group input-group-icon">
+          <input type="text" placeholder="Code"/>
+          <div class="input-icon"><i class="fa fa-user"></i></div>
+        </div>
+        <div class="input-group input-group-icon">
+          <input type="text" placeholder="Full Name"/>
+          <div class="input-icon"><i class="fa fa-user"></i></div>
+        </div>
+        <div class="input-group input-group-icon">
+          <input type="text" placeholder="Adress"/>
+          <div class="input-icon"><i class="fa fa-envelope"></i></div>
+        </div>
+        <div class="input-group input-group-icon">
+          <input type="tel" placeholder="Phone Number"/>
+          <div class="input-icon"><i class="fa fa-key"></i></div>
+        </div>
+      </div>
+      <input type="submit">
+    </form>
+  </div>
+</body>
+<script type="text/javascript" src="{% static 'js/client.js' %}"></script>
+
+</html>
